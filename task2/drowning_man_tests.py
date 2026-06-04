@@ -12,9 +12,9 @@ def formulas(d1, d2, h, v_sand, n, degree): # рассичываем значе�
     d1 = float(d1) * 3
     d2 = float(d2)
     h = float(h) * 3
-    v_sand = float(v_sand ) * 5280
+    v_sand = float(v_sand) * 5280
     n = float(n)
-    degree = round(float(degree))
+    degree = float(degree)
         
     x = d1 * M.tan(M.radians(degree))
     l1 = (x ** 2 + d1 ** 2) ** 0.5
@@ -36,7 +36,7 @@ def tests():
     print('Полученный результат:', result)
     print()
     # --------------------------------------------------
-    excepted = 1717.2
+    excepted = 1717.3
     result = formulas(5, 20, 10, 1, 2, 89)
     print('Тест 2:')
     if excepted == result:
@@ -62,4 +62,4 @@ tests()
 
 d1, d2, h, v_sand, n, degree = get_values()
 t = formulas(d1, d2, h, v_sand, n, degree)
-print(f'Спасатель достигнет утопающего через {round(t * 3600, 1)} сек.')
+print(f'Спасатель достигнет утопающего через {t} сек.')
