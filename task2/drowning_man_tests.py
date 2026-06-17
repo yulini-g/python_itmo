@@ -2,13 +2,20 @@ import math as M
 import doctest
 
 def get_values(): # запрашиваем значения у пользователя
-    d1 = float(input('Введите кратчайшее расстояние от спасателя до кромки воды в ярдах: '))
-    d2 = float(input('Введите кратчайшее расстояние от утопающего до берега в футах: '))
-    h = float(input('Введите боковое смещение между спасателем и утопающим в ярдах: '))
-    v_sand = float(input('Введите скорость движения спасателя по песку в милях в час: '))
-    n  = float(input('Введите коэффициент замедления спасателя при движении в воде: '))
-    degree = float(input('Введите направление движения спасателя по песку в градусах: '))
-    return d1, d2, h, v_sand, n, degree
+    d1 = float(input('Введите кратчайшее расстояние между спасателем и кромкой воды, d1 (ярды) => '))
+    print(int(d1))
+    d2 = float(input('Введите кратчайшее расстояние от утопающего до берега, d2 (футы) => '))
+    print(int(d2))
+    h = float(input('Введите боковое смещение между спасателем и утопающим, h (ярды) => '))
+    print(int(h))
+    v_sand = float(input('Введите скорость движения спасателя по песку, v_sand (мили в час) => '))
+    print(int(v_sand))
+    n = float(input('Введите коэффициент замедления спасателя при движении в воде, n => '))
+    print(int(n))
+    degree = float(input('Введите направление движения спасателя по песку, theta1 (градусы) => '))
+    print(degree)
+    output_degree = degree
+    return d1, d2, h, v_sand, n, degree, output_degree
 
 def trans(d1, h, v_sand, degree): # переводим значения в единую систему
     """
@@ -60,7 +67,7 @@ if __name__ == "__main__":
     doctest.testmod(verbose=True)
     print('\n' + '*' * 10)
 
-d1, d2, h, v_sand, n, degree = get_values()
+d1, d2, h, v_sand, n, degree, output_degree = get_values()
 d1, h, v_sand, degree = trans(d1, h, v_sand, degree)
 t = formulas(d1, d2, h, v_sand, n, degree)
-print('\nОтвет:', t)
+print(f'Если спасатель начнёт движение под углом theta1, равным {round(output_degree)} градусам, он достигнет утопающего через {t} секунды')
