@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image as I, ImageDraw as ID
 import random as R
 
 def start(size, fill):
@@ -212,19 +212,67 @@ def set_age(ages, field):
         new_ages.append(row)
     return new_ages
 
-if __name__ == "__main__":
-    size = 3
-    import doctest
-    doctest.testmod(verbose=True)
+# ================== ВИЗУАЛИЗАЦИЯ =========================
+
+def draw_field(colors, size, ages, img_size, pixel_size):
+
+    img = I.new('RGB', (img_size, img_size))
+    brush = ID.Draw(img)
+
+    for y in range(size):
+        for x in range(size):
+            if ages[y][x] != 0 and ages[y][x] != 6:
+
+                color_index = ages[y][x]
+                color = colors[color_index - 1]
+
+                x1, x2 = x * pixel_size, (x + 1) * pixel_size
+                y1, y2 = y * pixel_size, (y + 1) * pixel_size
+
+                brush.rectangle([x1, y1, x2, y2], fill = color)
+            else:
+                continue
+    return img
+
+#====================== ТЕСТИРОВАНИЕ ======================
+
+# if __name__ == "__main__":
+#     size = 3
+#     import doctest
+#     doctest.testmod(verbose=True)
 
 # ================== ОСНОВНАЯ ПРОГРАММА ===================
-# f = open(r"start.txt")
-# f = f.read().split('\n')
-# size = int(f[0][f[0].find(':') + 2:])  # размер поля
-# fill = int(f[1][f[1].find(':') + 2:])  # процент живых клеток в начале
-# gens = int(f[2][f[2].find(':') + 2:])  # количество поколений
 
-# field, ages = start(size, fill)
-# for _ in range(gens):
-#     field = update(field, ages)
-#     ages = set_age(ages, field)
+f = open(r"start.txt")
+f = f.read().split('\n')
+size = int(f[0][f[0].find(':') + 2:])  # размер поля
+fill = int(f[1][f[1].find(':') + 2:])  # процент живых клеток в начале
+gens = int(f[2][f[2].find(':') + 2:])  # количество поколений
+
+colors = [
+    (255, 255, 255),  # 0 - белый
+    (200, 200, 200),  # 1 - светло-серый
+    (150, 150, 150),  # 2 - средний серый
+    (100, 100, 100),  # 3 - темно-серый
+    (60, 60, 60)]     # 4 - почти черный
+
+pixel_size = 20               # размер кисти
+img_size = pixel_size * size  # размер холста
+
+field, ages = start(size, fill)
+
+gif_frames = []
+for i in range(gens):
+    field = update(field, ages)
+    ages = set_age(ages, field)
+    img = draw_field(colors, size, ages, img_size, pixel_size)
+    gif_frames.append(img)
+
+    # img.save(f'life_{i + 1}.png')
+
+gif_frames[0].save('life.gif',
+                   save_all = True,
+                   append_images = gif_frames[1:],
+                   duration = 500) 
+print('GIF создан успешно!')
+
