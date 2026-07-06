@@ -653,10 +653,10 @@ def leave_review(market, reviews, reviews_file): # Позволяет остав
         except ValueError:
             print('Ошибка: введите число.')
 
-    choice = input('Хотите оставить отзыв о рынке?\n1. Да\n2. Нет')
+    choice = input('Хотите оставить отзыв о рынке?\n1. Да\n2. Нет\n')
     while choice not in ['1', '2']:
         print('Неверная команда.')
-        choice = input('Хотите оставить отзыв о рынке?\n1. Да\n2. Нет')
+        choice = input('Хотите оставить отзыв о рынке?\n1. Да\n2. Нет\n')
     
     if choice == '1':
         text = input('Введите отзыв: ').strip()
