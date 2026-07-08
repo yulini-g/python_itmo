@@ -20,10 +20,10 @@ def read_markets(filename):  # Читает CSV с табуляцией и во�
     result = []
     
     with open(filename, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+        text = f.read()
+    rows = split_csv_rows(text)
 
-    
-    header_line = lines[0].strip()
+    header_line = rows[0].strip()
     headers = header_line.split(',')
     
     # Чистим заголовки от пробелов
@@ -31,12 +31,14 @@ def read_markets(filename):  # Читает CSV с табуляцией и во�
     for h in headers:
         clean_headers.append(h.strip())
     
-    for i in range(1, len(lines)):
-        line = lines[i].strip()
+    for i in range(1, len(rows)):
+        line = rows[i].strip()
         if line == '':
             continue
+        if line.startswith('"') and line.endswith('"'):
+            line = line[1:-1]
         
-        values = line.split(',')
+        values = split_csv_lines(line)   # ЗАМЕНИТЬ НА ДРУГУЮ ФУНКЦИЮ
         market = {}
         
         for j in range(len(clean_headers)):
@@ -52,6 +54,58 @@ def read_markets(filename):  # Читает CSV с табуляцией и во�
         
         result.append(market)
     
+    return result
+def split_csv_rows(text): # Разбивает на строки с учето кавычек и многострочный полей.
+    rows = []
+    current = ''
+    quotes = False
+    i = 0
+    
+    while i < len(text):
+        char = text[i]
+        if char == '"':
+            if quotes and i + 1 < len(text) and text[i + 1] == '"':
+                current += '""'
+                i += 1
+            else:
+                quotes = not quotes
+                current += char
+        elif char == '\n' and not quotes:
+            rows.append(current)
+            current = ''
+        else:
+            current += char
+        i += 1
+
+    if current != '':
+        rows.append(current)
+
+    return rows
+
+def split_csv_lines(line):  #  Разбивает строку csv по поля с учетом кавычек.
+    result = []
+    current = ''
+    quotes = False
+    i = 0
+
+    while i < len(line):
+        char = line[i]
+        if char == '"':
+            # Если двойная кавычка есть внутри поля, то добавляем ее:
+            if quotes and (i + 1) < len(line) and line[i + 1] == '"':
+                current += '"'
+                i += 1
+            else:
+                quotes = not quotes
+        elif char == ',' and not quotes:
+            result.append(current)
+            current = ''
+        else:
+            current += char
+        
+        i += 1
+
+    result.append(current)
     return result
 def save_markets(filename, markets):  # Сохраняет список словарей в csv файл.
     with open(filename, 'w', encoding='utf-8') as f:
@@ -225,7 +279,7 @@ def sort_markets(markets, key, is_reversed, reviews): # Сортировка р�
 
     >>> res = sort_markets(markets, 'city_state', True, None)
     >>> res[5]['FMID']
-    '1018261'
+    '1005944'
 
     >>> res = sort_markets(markets, 'zip', False, None)
     >>> res[5]['FMID']
@@ -233,7 +287,11 @@ def sort_markets(markets, key, is_reversed, reviews): # Сортировка р�
 
     >>> res = sort_markets(markets, 'zip', True, None)
     >>> res[2]['FMID']
-    '1011171'
+    '1019847'
+
+    >>> res = sort_markets(markets, 'zip', True, None)
+    >>> len(res)
+    48
     """
     filtered = []
     for market in markets:
@@ -300,84 +358,30 @@ def get_city_state(markets, reviews, reviews_file): # Запрашивает г�
             print('Неверная команда.')
 def get_zip(markets, reviews, reviews_file): # Запрашивает ZIP-код и показывает результат.
     while True:
-        zip_code = input('Введите Ваш ZIP-код: ').strip()
-        while zip_code.isdigit() == False or len(zip_code) != 5:
+        zip_code = input('Введите ZIP-код: ').strip()
+        while not zip_code.isdigit() or len(zip_code) != 5:
             print('Ошибка: некорректный ZIP-код.')
-            zip_code = input('Введите Ваш ZIP-код: ').strip()
+            zip_code = input('Введите ZIP-код: ').strip()
+        
         found = False
         for market in markets:
             if market.get('zip', '') == zip_code:
                 found = True
                 break
-        if found == False:
+        
+        if not found:
             print('Извините, данного ZIP-кода нет в базе данных.')
-            choice = input('Хотите ввести дургой ZIP-код?\n1. Да\n2. Нет\n').strip()
+            choice = input('Хотите ввести другой ZIP-код?\n1. Да\n2. Нет\n> ').strip()
             while choice not in ['1', '2']:
                 print('Некорректная команда.')
-                choice = input('Хотите ввести дургой ZIP-код?\n1. Да\n2. Нет\n').strip()
-
+                choice = input('Хотите ввести другой ZIP-код?\n1. Да\n2. Нет\n> ').strip()
             if choice == '2':
                 return
-            else:
-                continue
         else:
             break
     
-    choice = input('Хотите задать радиус области для поиска?\n1. Да\n2. Нет\n').strip()
-    while choice not in ['1', '2']:
-                print('Некорректная команда.')
-                choice = input('Хотите задать радиус области для поиска?\n1. Да\n2. Нет\n').strip()
-    
-    if choice == '2':
-        radius = None
-
-    else:
-        while True:
-            radius = input('Введите радиус области поиска в милях: ').strip()
-            dots = 0
-            ok = True
-            for char in radius:
-                if char == '.':
-                    dots += 1
-                elif char.isdigit() == False:
-                    ok = False
-            if (ok == True and
-                dots <= 1 and
-                radius != '' and
-                radius != '.'):
-                    radius = float(radius)
-                    break
-            else:
-                print('Некорректная команда.')
-
-    result = search_by_zip(markets, zip_code, radius)
-    if len(result) == 0:
-        print('Ничего не найдено.')
-        return
-    
-    print('Найдено рынков:', len(result))
-    print('-' * 50)
-    for i in range(len(result)):
-        market = result[i]
-        print(i + 1, '|', 
-              market.get('MarketName', ''), '|', 
-              market.get('city', ''), '|', 
-              market.get('State', ''))
-        print('-' * 50)
-
-    while True:
-        choice = input('Введите номер рынка для просмотра деталей (0 - в меню): ').strip()
-        if choice == '0':
-            break
-        if choice.isdigit():
-            choice = int(choice)
-            if 0 < choice and choice <= len(result):
-                market = result[choice - 1]
-                show_details(market, reviews, reviews_file)
-            else:
-                print('Введен некорректный номер.')
-        else:
-            print('Неверная команда.')
+    result = search_by_zip(markets, zip_code, None)
+    show_search_result(result, markets, reviews, reviews_file)
 def get_sort_key(markets, reviews, reviews_file): # Определяет параметр, по которму будет происходить сортировка.
     print('\nДоступные ключи сортировки:', '1. Город и штат', '2. Название рынка', '3. Город', '4. Штат', '5. ZIP-код', '6. Рейтинг', '0. Выход в меню', sep='\n')
 
@@ -423,6 +427,74 @@ def get_sort_key(markets, reviews, reviews_file): # Определяет пар�
         return
     
     all_markets_view(sorted_list, reviews, reviews_file)
+def get_distance (markets, reviews, reviews_file):
+    while True:
+        zip_code = input('Введите Ваш ZIP-код: ').strip()
+        while zip_code.isdigit() == False or len(zip_code) != 5:
+            print('Ошибка: некорректный ZIP-код.')
+            zip_code = input('Введите Ваш ZIP-код: ').strip()
+        found = False
+        for market in markets:
+            if market.get('zip', '') == zip_code:
+                found = True
+                break
+        if found == False:
+            print('Извините, данного ZIP-кода нет в базе данных.')
+            choice = input('Хотите ввести дургой ZIP-код?\n1. Да\n2. Нет\n').strip()
+            while choice not in ['1', '2']:
+                print('Некорректная команда.')
+                choice = input('Хотите ввести дургой ZIP-код?\n1. Да\n2. Нет\n').strip()
+
+            if choice == '2':
+                return
+        else:
+            break
+    
+    while True:
+        radius = input('Введите радиус области поиска в милях: ').strip()
+        dots = 0
+        ok = True
+        for char in radius:
+            if char == '.':
+                dots += 1
+            elif char.isdigit() == False:
+                ok = False
+        if (ok == True and
+            dots <= 1 and
+            radius != '' and
+            radius != '.'):
+                radius = float(radius)
+                break
+        else:
+            print('Некорректная команда.')
+
+    result = search_by_zip(markets, zip_code, radius)
+    show_search_result(result, markets, reviews, reviews_file)
+def show_search_result(result, markets, reviews, reviews_file):
+    if len(result) == 0:
+        print('Ничего не найдено.')
+        return
+
+    print('\nНайдено рынков:', len(result))
+    print('-' * 50)
+    for i in range(len(result)):
+        market = result[i]
+        print(i + 1, '|', market.get('MarketName', ''), '|', market.get('city', ''), '|', market.get('State', ''))
+        print('-' * 50)
+
+    while True:
+        choice = input('Введите номер рынка для просмотра деталей (0 - в меню): ').strip()
+        if choice == '0':
+            break
+        if choice.isdigit():
+            choice = int(choice)
+            if 0 < choice <= len(result):
+                market = result[choice - 1]
+                show_details(market, reviews, reviews_file)
+            else:
+                print('Введен некорректный номер.')
+        else:
+            print('Неверная команда.')
 def pick_market(markets, action):
     page = 1
     per_page = 10
@@ -653,10 +725,12 @@ def leave_review(market, reviews, reviews_file): # Позволяет остав
         except ValueError:
             print('Ошибка: введите число.')
 
-    choice = input('Хотите оставить отзыв о рынке?\n1. Да\n2. Нет\n')
+    print('Оценка поставлена!\n')
+
+    choice = input('Хотите оставить развернутый отзыв о рынке?\n1. Да\n2. Нет\n')
     while choice not in ['1', '2']:
         print('Неверная команда.')
-        choice = input('Хотите оставить отзыв о рынке?\n1. Да\n2. Нет\n')
+        choice = input('Хотите оставить развернутый отзыв о рынке?\n1. Да\n2. Нет\n')
     
     if choice == '1':
         text = input('Введите отзыв: ').strip()
@@ -671,7 +745,7 @@ def leave_review(market, reviews, reviews_file): # Позволяет остав
         reviews.append(r)
     
     print('=' * 50)
-    print('Рецензия добавлена!')
+    print('Отзыв добавлен!')
     print('=' * 50)
 #================== ВЫВОД НА ЭКРАН =========================
 def main_menu(markets, reviews_file): # Главное меню.
@@ -684,14 +758,15 @@ def main_menu(markets, reviews_file): # Главное меню.
         print('1. Просмотр всех рынков')
         print('2. Поиск по городу и штату')
         print('3. Поиск по ZIP')
-        print('4. Сортировка рынков')
-        print('5. Удалить рынок')
-        print('6. Выход')
+        print('4. Поиск по удаленности')
+        print('5. Сортировка рынков')
+        print('6. Удалить рынок')
+        print('7. Выход')
         print('=' * 50)
 
-        choice = input('Выберите действие (1-6): ').strip()
-        while choice not in ['1', '2', '3', '4', '5', '6']:
-            choice = input('Неверная команда. Введите число от 1 до 6: ')
+        choice = input('Выберите действие (1-7): ').strip()
+        while choice not in ['1', '2', '3', '4', '5', '6', '7']:
+            choice = input('Неверная команда. Введите число от 1 до 7: ')
 
         if choice == '1':
             print('\nПРОСМОТР ВСЕХ РЫНКОВ')
@@ -703,12 +778,15 @@ def main_menu(markets, reviews_file): # Главное меню.
             print('\nПОИСК ПО ZIP')
             get_zip(markets, reviews, reviews_file)
         elif choice == '4':
+            print('\nПОИСК ПО УДАЛЕННОСТИ')
+            get_distance(markets, reviews, reviews_file)
+        elif choice == '5':
             print('\nСОРТИРОВКА РЫНКОВ')
             get_sort_key(markets, reviews, reviews_file)
-        elif choice == '5':
+        elif choice == '6':
             print('\nУДАЛЕНИЕ РЫНКА')
             delete_market(markets, reviews, reviews_file)
-        elif choice == '6':
+        elif choice == '7':
             print('\nДо свидания!')
             break
 def all_markets_view(markets, reviews, reviews_file): # Показывает все рынки по страницам.
@@ -730,8 +808,9 @@ def show_details(market, reviews, reviews_file): # Показывает дета
 
     # Рецензии
     market_rating = get_rating_reviews(reviews, market.get('FMID', ''))
-    print('\nКоличество отзывов:', len(market_rating['reviews']))
+    print('Количество отзывов:', len(market_rating['reviews']))
     print('Среднй рейтинг рынка: ', market_rating['average_rating'])
+    print('=' * 50)
     
     if len(market_rating['reviews']) > 0:
         answer = input('Посмотреть отзывы?\n1. Да\n2. Нет\n').strip()
@@ -747,13 +826,13 @@ def show_details(market, reviews, reviews_file): # Показывает дета
                 print(f"    Оценка: {comment.get('rating', '')} / 5")
                 print()
     
-    answer = input('Хотите оставть отзыв об этом рынке?\n1. Да\n2. Нет ').strip()
+    answer = input('Хотите оценить этот рынок?\n1. Да\n2. Нет\n').strip()
     while answer not in ['1', '2']:
         print('Неверная команда.')
-        answer = input('Хотите оставть отзыв об этом рынке?\n1. Да\n2. Нет \n').strip()
+        answer = input('Хотите оценить этот рынок?\n1. Да\n2. Нет\n').strip()
     if answer == '1':
         leave_review(market, reviews, reviews_file)
-# #================== ТЕСТИРОВАНИЕ =========================
+#================== ТЕСТИРОВАНИЕ =========================
 if __name__ == '__main__':
     import doctest
     doctest.testmod(verbose=True)
