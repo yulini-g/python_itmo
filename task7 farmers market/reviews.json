@@ -26,5 +26,19 @@
         "last_name": "Абрамович",
         "rating": 4,
         "text": "Мало свежих ягод!!!!"
+    },
+    {
+        "fmid": "1018965",
+        "first_name": "Eee",
+        "last_name": "Rrr",
+        "rating": 4,
+        "text": "ttt"
+    },
+    {
+        "fmid": "1018965",
+        "first_name": "",
+        "last_name": "",
+        "rating": 5,
+        "text": "ппп"
     }
 ]
