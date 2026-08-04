@@ -1,7 +1,6 @@
 import json
 import math as M
 import csv
-import os
 #================== РАБОТА С ДАННЫМИ =========================
 def read_markets(filename): # Читает CSV с табуляцией и возвращает список словарей.
     """
