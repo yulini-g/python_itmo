@@ -126,6 +126,8 @@ class GameScreen(QWidget):
         grid_layout.setSpacing(3)
         grid_layout.setContentsMargins(10, 10, 10, 10)
         
+        grid_layout.setAlignment(Qt.AlignCenter)
+        
         empty_style = """
             QPushButton {
                 background-color: #bddcfc;
@@ -232,18 +234,18 @@ class GameScreen(QWidget):
         if result == 'miss':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('miss'))
             self.status_label.setText('💨 Промах! Ход противника...')
+            # Только при промахе ход переходит к компьютеру
+            QTimer.singleShot(700, self.ai_move)
         elif result == 'hit':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('hit'))
-            self.status_label.setText('🎯 Попадание! Ход противника...')
+            self.status_label.setText('🎯 Попадание! Стреляйте ещё раз!')
         elif result == 'sunk':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('sunk'))
-            self.status_label.setText('💥 Корабль потоплен! Ход противника...')
+            self.status_label.setText('💥 Корабль потоплен! Стреляйте ещё раз!')
         
         if self.ai_board.is_all_sunk():
             self.status_label.setText('🏆 ПОБЕДА! Вы потопили все корабли противника!')
             return
-        
-        QTimer.singleShot(700, self.ai_move)
     
     def ai_move(self):
         """Ход компьютера"""
@@ -256,13 +258,16 @@ class GameScreen(QWidget):
             
             if result == 'miss':
                 self.player_buttons[(y, x)].setStyleSheet(self.get_button_style('miss'))
-                self.status_label.setText('Противник промахнулся! Ваш ход!')
+                self.status_label.setText('💨 Противник промахнулся! Ваш ход!')
+
             elif result == 'hit':
                 self.player_buttons[(y, x)].setStyleSheet(self.get_button_style('hit'))
-                self.status_label.setText('🎯 Противник попал! Ваш ход!')
+                self.status_label.setText('🎯 Противник попал! Он ходит снова...')
+                QTimer.singleShot(700, self.ai_move)
             elif result == 'sunk':
                 self.player_buttons[(y, x)].setStyleSheet(self.get_button_style('sunk'))
-                self.status_label.setText('💥 Противник потопил ваш корабль! Ваш ход!')
+                self.status_label.setText('💥 Противник потопил ваш корабль! Он ходит снова...')
+                QTimer.singleShot(700, self.ai_move)
             
             if self.player_board.is_all_sunk():
                 self.status_label.setText('😢 ПОРАЖЕНИЕ! Противник потопил все ваши корабли!')

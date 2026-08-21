@@ -7,7 +7,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Морской бой')
-        self.setFixedSize(1000, 700) 
+        # self.setFixedSize(1000, 700) 
         
         # Переключение экранов
         self.stacked_widget = QStackedWidget()
