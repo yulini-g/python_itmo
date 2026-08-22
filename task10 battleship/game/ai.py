@@ -14,8 +14,15 @@ class AIPlayer:
             if move:
                 return move
             
-        return self.random_move(board)
-
+        if self.difficulty == 'easy':
+            return self.random_move(board)
+        elif self.difficulty == 'medium':
+            if random.randint(1, 2) == 1:
+                return self.random_move(board)
+            else:
+                return self.chess_order_move(board)
+        else:
+            return self.chess_order_move(board)
             
     def random_move(self, board):
         """Случайный выстрел по неоткрытым клеткам"""
@@ -28,6 +35,19 @@ class AIPlayer:
         if available:
             return random.choice(available)
         return None
+    
+    def chess_order_move(self, board):
+        """Стрельба через клетку (шахматный порядок)"""
+        available = []
+        for x in range(board.size):
+            for y in range(board.size):
+                if ((x + y) % 2 == 0 and
+                    board.grid[y][x] in [0, 1]):
+                    available.append((x, y))
+        
+        if available:
+            return random.choice(available)
+        return self.random_move(board)
 
     def finish_ship(self, board):
         """Добивание раненого корабля"""
@@ -118,18 +138,3 @@ class AIPlayer:
     
     
     
-    # def chess_order_move(self, board): # Добработка для будующих версий
-    #     """Стрельба через клетку (шахматный порядок)"""
-    #     if self.even_cells:
-    #         available = []
-    #         for x in range(board.size):
-    #             for y in range(board.size):
-    #                 if ((x + y) % 2 == 0 and
-    #                     board.grid[y][x] in [0, 1]):
-    #                     available.append((x, y))
-            
-    #         if available:
-    #             return random.choice(available)
-    #         else:
-    #             self.even_cells = False
-    #     return self.random_move(board)

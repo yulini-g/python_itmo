@@ -1,13 +1,15 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget, QStackedWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget, QStackedWidget, QDialog
 from PySide6.QtCore import Qt
 from gui.game_screen import GameScreen
+from gui.settings_dialog import SettingsDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Морской бой')
-        # self.setFixedSize(1000, 700) 
+        self.current_difficulty = 'medium'
+        self.resize(1000, 700) 
         
         # Переключение экранов
         self.stacked_widget = QStackedWidget()
@@ -18,7 +20,7 @@ class MainWindow(QMainWindow):
         self.setup_menu_screen()
         
         # Игровой экран
-        self.game_screen = GameScreen()
+        self.game_screen = GameScreen(difficulty=self.current_difficulty)
         
         # Добавляем экраны в стопку
         self.stacked_widget.addWidget(self.menu_screen)   # индекс 0
@@ -114,18 +116,29 @@ class MainWindow(QMainWindow):
         self.exit_btn.clicked.connect(self.close)
     
     def show_game(self):
-        """Показать игровой экран"""
-        self.stacked_widget.setCurrentIndex(1)
+        """Показать игровой экран (создать новую игру)"""
+        self.stacked_widget.removeWidget(self.game_screen)
+        self.game_screen.deleteLater()
+        
+        self.game_screen = GameScreen(difficulty=self.current_difficulty)
+        self.stacked_widget.addWidget(self.game_screen)
+        
+        self.game_screen.back_btn.clicked.connect(self.show_menu)
+        
+        self.stacked_widget.setCurrentWidget(self.game_screen)
     
     def show_menu(self):
         """Показать меню"""
         self.stacked_widget.setCurrentIndex(0)
     
     def settings(self):
-        print("Открываем настройки")
-        # Здесь будет окно настроек
-    
+        """Открывает настройки"""
+        dialog = SettingsDialog(self, self.current_difficulty)
+        
+        if dialog.exec() == QDialog.Accepted:
+            self.current_difficulty = dialog.get_difficulty()
+            print(f"Выбрана сложность: {self.current_difficulty}")
+            
     def records(self):
         print("Показываем рекорды")
         # Здесь будет окно рекордов
-

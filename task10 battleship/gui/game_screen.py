@@ -6,14 +6,14 @@ from game.board import Board
 from game.ai import AIPlayer
 
 class GameScreen(QWidget):
-    def __init__(self):
+    def __init__(self, difficulty='medium'):
         super().__init__()
         self.setWindowTitle('Морской бой')
         
         # Создаём игровые поля
         self.player_board = Board()
         self.ai_board = Board()
-        self.ai = AIPlayer(difficulty='medium')
+        self.ai = AIPlayer(difficulty=difficulty)
         
         # Расставляем корабли
         self.player_board.place_ships_randomly()
@@ -271,3 +271,12 @@ class GameScreen(QWidget):
             
             if self.player_board.is_all_sunk():
                 self.status_label.setText('😢 ПОРАЖЕНИЕ! Противник потопил все ваши корабли!')
+                
+        def show_game(self):
+            self.stacked_widget.removeWidget(self.game_screen)
+            self.game_screen.deleteLater()
+            
+            self.game_screen = GameScreen(difficulty=self.current_difficulty)
+            self.stacked_widget.addWidget(self.game_screen)
+            self.game_screen.back_btn.clicked.connect(self.show_menu)
+            self.stacked_widget.setCurrentWidget(self.game_screen)
