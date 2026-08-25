@@ -14,6 +14,11 @@ class RecordsManager:
             with open(self.filename, 'r', encoding='utf-8') as f:
                 return json.load(f)
             
+            for difficulty in data:
+                if isinstance(data[difficulty], list):
+                    data[difficulty].sort(key=lambda x: x['score'])
+            return data
+            
         return {
             'easy': [],
             'medium': [],
