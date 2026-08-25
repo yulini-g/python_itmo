@@ -1,7 +1,8 @@
 import sys
-from PySide6.QtWidgets import QApplication, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QGridLayout
+from PySide6.QtWidgets import QApplication, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QGridLayout, QInputDialog
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor, QPalette
+from gui.records_dialog import RecordsManager
 from game.board import Board
 from game.ai import AIPlayer
 
@@ -9,6 +10,9 @@ class GameScreen(QWidget):
     def __init__(self, difficulty='medium'):
         super().__init__()
         self.setWindowTitle('Морской бой')
+        self.game_over = False
+        self.player_moves = 0
+        self.difficulty = difficulty
         
         # Создаём игровые поля
         self.player_board = Board()
@@ -43,6 +47,27 @@ class GameScreen(QWidget):
         boards_layout.addWidget(player_container)
         boards_layout.addWidget(ai_container)
         
+        # Кнопка "Переставить корабли"
+        self.rearrange_btn = QPushButton('🔄 Переставить корабли')
+        self.rearrange_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #9dc8f5;
+                color: #14569c;
+                font-size: 16px;
+                padding: 12px;
+                border-radius: 10px;
+                min-width: 200px;
+                margin-top: 10px;
+            }
+            QPushButton:hover {
+                background-color: #b6d8fc;
+            }
+            QPushButton:pressed {
+                background-color: #7db7f5;
+            }
+        """)
+        self.rearrange_btn.clicked.connect(self.rearrange_ships)
+        
         # Кнопка "Назад в меню"
         self.back_btn = QPushButton('🔙 Назад в меню')
         self.back_btn.setStyleSheet("""
@@ -66,6 +91,8 @@ class GameScreen(QWidget):
         main_layout.addLayout(boards_layout)
         main_layout.addWidget(self.back_btn, alignment=Qt.AlignCenter)
         main_layout.addStretch()
+        main_layout.addWidget(self.rearrange_btn, alignment=Qt.AlignCenter)
+
         
         self.setLayout(main_layout)
         
@@ -226,10 +253,15 @@ class GameScreen(QWidget):
     
     def on_ai_board_click(self, x, y):
         """Обработка клика по полю компьютера"""
+        if self.game_over:
+            return
+        
         if self.ai_board.grid[y][x] in [2, 3]:
             return
         
         result = self.ai_board.receive_shot(x, y)
+        self.rearrange_btn.hide()
+        self.player_moves += 1
         
         if result == 'miss':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('miss'))
@@ -245,10 +277,15 @@ class GameScreen(QWidget):
         
         if self.ai_board.is_all_sunk():
             self.status_label.setText('🏆 ПОБЕДА! Вы потопили все корабли противника!')
+            self.game_over = True
+            self.save_record()
             return
     
     def ai_move(self):
         """Ход компьютера"""
+        if self.game_over:
+            return
+
         move = self.ai.choose_move(self.player_board)
         
         if move:
@@ -271,12 +308,38 @@ class GameScreen(QWidget):
             
             if self.player_board.is_all_sunk():
                 self.status_label.setText('😢 ПОРАЖЕНИЕ! Противник потопил все ваши корабли!')
-                
-        def show_game(self):
-            self.stacked_widget.removeWidget(self.game_screen)
-            self.game_screen.deleteLater()
+                self.game_over = True
+                return
             
-            self.game_screen = GameScreen(difficulty=self.current_difficulty)
-            self.stacked_widget.addWidget(self.game_screen)
-            self.game_screen.back_btn.clicked.connect(self.show_menu)
-            self.stacked_widget.setCurrentWidget(self.game_screen)
+    def rearrange_ships(self):
+        """Переставляет корабли игрока случайно"""
+        if self.game_over:
+            return
+
+        # Создаём новое поле
+        self.player_board = Board()
+        self.player_board.place_ships_randomly()
+        
+        # Обновляем отображение
+        self.show_player_ships()
+        self.status_label.setText('🎯 Корабли переставлены! Начинайте игру!')
+                
+    def show_game(self):
+        self.stacked_widget.removeWidget(self.game_screen)
+        self.game_screen.deleteLater()
+        
+        self.game_screen = GameScreen(difficulty=self.current_difficulty)
+        self.stacked_widget.addWidget(self.game_screen)
+        self.game_screen.back_btn.clicked.connect(self.show_menu)
+        self.stacked_widget.setCurrentWidget(self.game_screen)
+        
+    def save_record(self):
+        """Сохранить рекорд после победы"""
+        name, ok = QInputDialog.getText(
+            self, 
+            'Победа!',
+            f'Вы победили за {self.player_moves} ходов!\nВведите Ваше имя: ')
+        
+        if ok and name:
+            records_manager = RecordsManager()
+            records_manager.add_record(self.difficulty, name, self.player_moves)

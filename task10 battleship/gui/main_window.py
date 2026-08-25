@@ -1,16 +1,21 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget, QStackedWidget, QDialog
+from PySide6.QtWidgets import QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget, QStackedWidget, QDialog
 from PySide6.QtCore import Qt
 from gui.game_screen import GameScreen
+from gui.config_manager import ConfigManager
+from gui.records_dialog import RecordsDialog
 from gui.settings_dialog import SettingsDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Морской бой')
-        self.current_difficulty = 'medium'
         self.resize(1000, 700) 
         
+        # Загружаем конфигурацию
+        self.config_manager = ConfigManager()
+        self.current_difficulty = self.config_manager.get_difficulty()
+
         # Переключение экранов
         self.stacked_widget = QStackedWidget()
         self.setCentralWidget(self.stacked_widget)
@@ -137,8 +142,9 @@ class MainWindow(QMainWindow):
         
         if dialog.exec() == QDialog.Accepted:
             self.current_difficulty = dialog.get_difficulty()
+            self.config_manager.set_difficulty(self.current_difficulty)
             print(f"Выбрана сложность: {self.current_difficulty}")
             
     def records(self):
-        print("Показываем рекорды")
-        # Здесь будет окно рекордов
+        dialog = RecordsDialog(self)
+        dialog.exec()
