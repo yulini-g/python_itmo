@@ -186,7 +186,7 @@ class GameScreen(QWidget):
                 grid_layout.addWidget(btn, row, col)
         
         grid_widget.setLayout(grid_layout)
-        return grid_widget  # возвращаем виджет!
+        return grid_widget
     
     def get_button_style(self, state):
         """Возвращает стиль кнопки в зависимости от состояния"""
@@ -266,14 +266,16 @@ class GameScreen(QWidget):
         if result == 'miss':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('miss'))
             self.status_label.setText('💨 Промах! Ход противника...')
-            # Только при промахе ход переходит к компьютеру
+            self.ai_board.grid[y][x] = 3
             QTimer.singleShot(700, self.ai_move)
         elif result == 'hit':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('hit'))
             self.status_label.setText('🎯 Попадание! Стреляйте ещё раз!')
+            self.ai_board.grid[y][x] = 2
         elif result == 'sunk':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('sunk'))
             self.status_label.setText('💥 Корабль потоплен! Стреляйте ещё раз!')
+            self.ai_board.grid[y][x] = 2
         
         if self.ai_board.is_all_sunk():
             self.status_label.setText('🏆 ПОБЕДА! Вы потопили все корабли противника!')
@@ -285,7 +287,7 @@ class GameScreen(QWidget):
         """Ход компьютера"""
         if self.game_over:
             return
-
+        
         move = self.ai.choose_move(self.player_board)
         
         if move:
@@ -295,50 +297,40 @@ class GameScreen(QWidget):
             
             if result == 'miss':
                 self.player_buttons[(y, x)].setStyleSheet(self.get_button_style('miss'))
+                self.player_board.grid[y][x] = 3
                 self.status_label.setText('💨 Противник промахнулся! Ваш ход!')
-
             elif result == 'hit':
                 self.player_buttons[(y, x)].setStyleSheet(self.get_button_style('hit'))
+                self.player_board.grid[y][x] = 2
                 self.status_label.setText('🎯 Противник попал! Он ходит снова...')
                 QTimer.singleShot(700, self.ai_move)
             elif result == 'sunk':
                 self.player_buttons[(y, x)].setStyleSheet(self.get_button_style('sunk'))
+                self.player_board.grid[y][x] = 2
                 self.status_label.setText('💥 Противник потопил ваш корабль! Он ходит снова...')
                 QTimer.singleShot(700, self.ai_move)
             
             if self.player_board.is_all_sunk():
-                self.status_label.setText('😢 ПОРАЖЕНИЕ! Противник потопил все ваши корабли!')
+                self.status_label.setText('💀 ПОРАЖЕНИЕ! Противник потопил все ваши корабли!')
                 self.game_over = True
-                return
-            
+    
     def rearrange_ships(self):
         """Переставляет корабли игрока случайно"""
         if self.game_over:
             return
-
-        # Создаём новое поле
+        
         self.player_board = Board()
         self.player_board.place_ships_randomly()
-        
-        # Обновляем отображение
         self.show_player_ships()
         self.status_label.setText('🎯 Корабли переставлены! Начинайте игру!')
-                
-    def show_game(self):
-        self.stacked_widget.removeWidget(self.game_screen)
-        self.game_screen.deleteLater()
-        
-        self.game_screen = GameScreen(difficulty=self.current_difficulty)
-        self.stacked_widget.addWidget(self.game_screen)
-        self.game_screen.back_btn.clicked.connect(self.show_menu)
-        self.stacked_widget.setCurrentWidget(self.game_screen)
-        
+    
     def save_record(self):
         """Сохранить рекорд после победы"""
         name, ok = QInputDialog.getText(
-            self, 
+            self,
             'Победа!',
-            f'Вы победили за {self.player_moves} ходов!\nВведите Ваше имя: ')
+            f'Вы победили за {self.player_moves} ходов!\nВведите Ваше имя: '
+        )
         
         if ok and name:
             records_manager = RecordsManager()

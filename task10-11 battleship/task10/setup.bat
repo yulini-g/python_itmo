@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 echo ====================================
 echo   Морской бой - Установка
 echo ====================================
@@ -13,7 +14,7 @@ if errorlevel 1 (
 )
 
 echo Установка зависимостей...
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 echo.
 echo Запуск приложения...
