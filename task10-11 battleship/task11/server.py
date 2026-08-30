@@ -39,9 +39,17 @@ def handle_client(client, address):
     
     while True:
         # Получаем выстрел от клиента
-        data = client.recv(1024)
-        if not data:
+        try:
+            data = client.recv(1024)
+            if not data:
+                break
+        except ConnectionResetError:
+            print(f"Игрок отключился (соединение разорвано): {address}")
             break
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            break
+
         
         shot = json.loads(data.decode())
         x = shot['x']

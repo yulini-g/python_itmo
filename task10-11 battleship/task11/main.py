@@ -5,7 +5,7 @@ from gui.main_window import MainWindow
 
 def main():
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon('gui/icon.png'))
+    app.setWindowIcon(QIcon('task11/gui/icon.png'))
     
     window = MainWindow()
     window.showMaximized()

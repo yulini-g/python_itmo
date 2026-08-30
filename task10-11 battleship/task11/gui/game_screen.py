@@ -13,6 +13,7 @@ class GameScreen(QWidget):
         self.game_over = False
         self.player_moves = 0
         self.difficulty = difficulty
+        self.waiting_for_server = False
         
         # Создаём игровые поля
         self.player_board = Board()
@@ -257,6 +258,9 @@ class GameScreen(QWidget):
         if self.game_over:
             return
         
+        if self.waiting_for_server:
+            return
+        
         if self.ai_board.grid[y][x] in [2, 3]:
             return
         
@@ -269,10 +273,11 @@ class GameScreen(QWidget):
         
         # Обновление кнопки на поле противника
         if result == 'miss':
+            self.waiting_for_server = True
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('miss'))
-            self.status_label.setText('💨 Промах! Ход противника...')
+            self.status_label.setText('🫧 Промах! Ход противника...')
             self.ai_board.grid[y][x] = 3
-            QTimer.singleShot(2000, lambda: self.process_server_moves(response.get('server_moves', [])))
+            QTimer.singleShot(1300, lambda: self.process_server_moves(response.get('server_moves', [])))
         elif result == 'hit':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('hit'))
             self.status_label.setText('🎯 Попадание! Стреляйте ещё раз!')
@@ -302,6 +307,7 @@ class GameScreen(QWidget):
             return
         
         if index >= len(server_moves):
+            self.waiting_for_server = False
             return
         
         move = server_moves[index]
@@ -324,7 +330,9 @@ class GameScreen(QWidget):
         
         # Следующий ход с задержкой
         if index + 1 < len(server_moves):
-            QTimer.singleShot(2000, lambda: self.process_server_moves(server_moves, index + 1))
+            QTimer.singleShot(1300, lambda: self.process_server_moves(server_moves, index + 1))
+        else:
+            self.waiting_for_server = False
     
     def rearrange_ships(self):
         """Переставляет корабли игрока случайно"""
