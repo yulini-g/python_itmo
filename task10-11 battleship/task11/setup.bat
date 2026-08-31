@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ====================================
-echo   Морской бой - Установка
+echo   Морской бой - Запуск
 echo ====================================
 echo.
 echo Проверка Python...
@@ -11,9 +11,23 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
 echo Установка зависимостей...
 python -m pip install -r requirements.txt
+
 echo.
-echo Запуск приложения...
+echo Запуск сервера в фоне...
+start /b python server.py
+
+echo Ожидание запуска сервера...
+timeout /t 2 /nolog >nul
+
+echo Запуск клиента...
 python main.py
+
+echo.
+echo Завершение всех процессов Python...
+taskkill /f /im python.exe >nul 2>&1
+
+echo Приложение завершено.
 pause
