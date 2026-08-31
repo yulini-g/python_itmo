@@ -1,9 +1,9 @@
 import threading
 import socket
 import json
+from game.ai import AIPlayer
 from game.board import Board
 from game.ship import Ship
-from game.ai import AIPlayer
 
 def handle_client(client, address):
     """Реализует игру с одним клиентом"""

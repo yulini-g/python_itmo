@@ -35,6 +35,17 @@ class GameScreen(QWidget):
             font-weight: bold;
         """)
         
+        # Статус игры
+        self.info_label = QLabel('Счёт: 0 | Ходов: 0')
+        self.info_label.setAlignment(Qt.AlignCenter)
+        self.info_label.setStyleSheet("""
+            font-size: 16px;
+            font-weight: bold;
+            color: #14569c;
+            margin: 5px;
+        """)
+
+        
         # Кнопки для полей
         self.player_buttons = {}
         self.ai_buttons = {}
@@ -87,14 +98,20 @@ class GameScreen(QWidget):
             }
         """)
         
+        # Layout для кнопок 
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(20)
+        buttons_layout.setAlignment(Qt.AlignCenter)
+        buttons_layout.addWidget(self.back_btn)
+        buttons_layout.addWidget(self.rearrange_btn)
+        
         # Главный layout
         main_layout = QVBoxLayout()
+        main_layout.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.status_label)
         main_layout.addLayout(boards_layout)
-        main_layout.addWidget(self.back_btn, alignment=Qt.AlignCenter)
-        main_layout.addStretch()
-        main_layout.addWidget(self.rearrange_btn, alignment=Qt.AlignCenter)
-
+        main_layout.addWidget(self.info_label)
+        main_layout.addLayout(buttons_layout)
         
         self.setLayout(main_layout)
         
@@ -121,6 +138,7 @@ class GameScreen(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(10)
         layout.setContentsMargins(15, 15, 15, 15)
+        layout.setAlignment(Qt.AlignCenter)
         
         # Заголовок
         title_label = QLabel(title)
@@ -136,7 +154,6 @@ class GameScreen(QWidget):
         # Сетка поля (виджет)
         grid_widget = self.create_board_grid(board, is_player)
         layout.addWidget(grid_widget)
-        layout.addStretch()
         
         container.setLayout(layout)
         return container
@@ -154,7 +171,6 @@ class GameScreen(QWidget):
         grid_layout = QGridLayout()
         grid_layout.setSpacing(3)
         grid_layout.setContentsMargins(10, 10, 10, 10)
-        
         grid_layout.setAlignment(Qt.AlignCenter)
         
         empty_style = """
@@ -280,12 +296,14 @@ class GameScreen(QWidget):
             QTimer.singleShot(1300, lambda: self.process_server_moves(response.get('server_moves', [])))
         elif result == 'hit':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('hit'))
-            self.status_label.setText('🎯 Попадание! Стреляйте ещё раз!')
+            self.status_label.setText('🎯 Попадание! + 10 очков! Стреляйте ещё раз!')
             self.ai_board.grid[y][x] = 2
         elif result == 'sunk':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('sunk'))
-            self.status_label.setText('💥 Корабль потоплен! Стреляйте ещё раз!')
+            self.status_label.setText('💥 Корабль потоплен! +25 очков! Стреляйте ещё раз!')
             self.ai_board.grid[y][x] = 2
+            
+        self.update_info()
 
         # Проверка конца игры
         if response.get('game_over'):
@@ -344,12 +362,16 @@ class GameScreen(QWidget):
         self.show_player_ships()
         self.status_label.setText('🎯 Корабли переставлены! Начинайте игру!')
     
+    def update_info(self):
+        """Обновить счёт и количество ходов"""
+        self.info_label.setText(f'Ходов: {self.player_moves}')
+
     def save_record(self):
         """Сохранить рекорд после победы"""
         name, ok = QInputDialog.getText(
             self,
             'Победа!',
-            f'Вы победили за {self.player_moves} ходов!\nВведите Ваше имя: '
+            f'Вы победили за {self.player_moves} ходов! Введите Ваше имя: '
         )
         
         if ok and name:

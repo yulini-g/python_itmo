@@ -10,7 +10,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Морской бой')
-        self.resize(1000, 700) 
+        self.showMaximized()
         
         # Загружаем конфигурацию
         self.config_manager = ConfigManager()
@@ -89,11 +89,11 @@ class MainWindow(QMainWindow):
         
         # Главный layout
         menu_layout = QVBoxLayout()
+        menu_layout.setAlignment(Qt.AlignCenter)
         menu_layout.addWidget(self.title)
         menu_layout.addWidget(self.subtitle)
-        menu_layout.addSpacing(30)
+        menu_layout.addSpacing(50)
         menu_layout.addLayout(buttons_layout)
-        menu_layout.addStretch()
         
         # Устанавливаем layout в menu_screen
         self.menu_screen.setLayout(menu_layout)
