@@ -16,18 +16,15 @@ echo Установка зависимостей...
 python -m pip install -r requirements.txt
 
 echo.
-echo Запуск сервера в фоне...
-start /b python server.py
+echo Запуск сервера...
+start "Морской бой - Сервер" python server.py
 
 echo Ожидание запуска сервера...
 timeout /t 2 /nolog >nul
 
 echo Запуск клиента...
-python main.py
+start "Морской бой - Клиент" python main.py
 
 echo.
-echo Завершение всех процессов Python...
-taskkill /f /im python.exe >nul 2>&1
-
-echo Приложение завершено.
+echo Приложение запущено!
 pause

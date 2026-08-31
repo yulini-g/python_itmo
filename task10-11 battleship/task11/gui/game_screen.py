@@ -36,7 +36,7 @@ class GameScreen(QWidget):
         """)
         
         # Статус игры
-        self.info_label = QLabel('Счёт: 0 | Ходов: 0')
+        self.info_label = QLabel('Ходов: 0')
         self.info_label.setAlignment(Qt.AlignCenter)
         self.info_label.setStyleSheet("""
             font-size: 16px;
@@ -296,11 +296,11 @@ class GameScreen(QWidget):
             QTimer.singleShot(1300, lambda: self.process_server_moves(response.get('server_moves', [])))
         elif result == 'hit':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('hit'))
-            self.status_label.setText('🎯 Попадание! + 10 очков! Стреляйте ещё раз!')
+            self.status_label.setText('🎯 Попадание! Стреляйте ещё раз!')
             self.ai_board.grid[y][x] = 2
         elif result == 'sunk':
             self.ai_buttons[(x, y)].setStyleSheet(self.get_button_style('sunk'))
-            self.status_label.setText('💥 Корабль потоплен! +25 очков! Стреляйте ещё раз!')
+            self.status_label.setText('💥 Корабль потоплен! Стреляйте ещё раз!')
             self.ai_board.grid[y][x] = 2
             
         self.update_info()
